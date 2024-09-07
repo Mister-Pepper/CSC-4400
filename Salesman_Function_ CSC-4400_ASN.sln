@@ -1,31 +1,190 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.9.34728.123
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Salesman_Function_ CSC-4400_ASN", "Salesman_Function_ CSC-4400_ASN\Salesman_Function_ CSC-4400_ASN.vcxproj", "{34993B21-7507-4F76-8A10-0A5D51FE09A2}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
-		Release|x64 = Release|x64
-		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{34993B21-7507-4F76-8A10-0A5D51FE09A2}.Debug|x64.ActiveCfg = Debug|x64
-		{34993B21-7507-4F76-8A10-0A5D51FE09A2}.Debug|x64.Build.0 = Debug|x64
-		{34993B21-7507-4F76-8A10-0A5D51FE09A2}.Debug|x86.ActiveCfg = Debug|Win32
-		{34993B21-7507-4F76-8A10-0A5D51FE09A2}.Debug|x86.Build.0 = Debug|Win32
-		{34993B21-7507-4F76-8A10-0A5D51FE09A2}.Release|x64.ActiveCfg = Release|x64
-		{34993B21-7507-4F76-8A10-0A5D51FE09A2}.Release|x64.Build.0 = Release|x64
-		{34993B21-7507-4F76-8A10-0A5D51FE09A2}.Release|x86.ActiveCfg = Release|Win32
-		{34993B21-7507-4F76-8A10-0A5D51FE09A2}.Release|x86.Build.0 = Release|Win32
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {97AD97BF-C39D-44C4-9FF4-12CDCC7F0E89}
-	EndGlobalSection
-EndGlobal
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <vector>
+#include <cstdlib>
+#include <time.h>
+#include <iomanip>
+using namespace std;
+
+class Salesman
+{
+private: 
+	string name;
+	int sales;
+
+public:
+	// constructor
+	Salesman()
+	{
+		name = "";
+		sales = 0;
+	}
+
+	// second constructor
+	Salesman(string s, int num)
+	{
+		name = s;
+		sales = num;
+	}
+	
+	// need a copy constructor as well
+	Salesman(const Salesman& obj)
+	{
+		name = obj.getName();
+		sales = obj.getSales();
+	}
+
+	// setter and getter methods
+	void setName(string s)
+	{
+		name = s;
+	}
+
+	void setSales(int num) 
+	{
+		sales = num;
+	}
+
+	string getName() const
+	{
+		return name;
+	}
+
+	int getSales() const
+	{
+		return sales;
+	}
+};
+
+// function prototypes
+string makeName();
+
+int generateSales();
+
+vector <Salesman> generateSalesman();
+
+vector<Salesman> getTop5Salesman(vector<Salesman> input);
+
+int main()
+{
+	// seed for rand function
+	srand(time(0));
+		
+	cout << "*** Top 5 Salespeople ***" << endl;
+
+	vector<Salesman> roster = generateSalesman();
+
+	// now we will call the top5 function to return the top 5 salemen
+	vector <Salesman> top5 = getTop5Salesman(roster);
+
+	cout << fixed << showpoint;
+
+	for (int count = 0; count < top5.size(); count++)
+	{
+		cout << setw(10) << left << top5[count].getName() << "$" << setw(15) << top5[count].getSales() << endl;
+	}
+
+	cout << endl << "Total workers on roster: " << roster.size() << endl;
+
+	return 0;
+}
+
+vector<Salesman> getTop5Salesman(vector<Salesman> input)
+{
+	// create a temp vector that will be returned
+	vector<Salesman> topFive;
+
+	// input validation in case there are less than 5 salesmen
+	if (input.size() < 6) // 7 because we want at least 6 salesmen in the vector + the end of vector marker.. 6 + 1 = 7
+	{
+		cout << "The sales team roster is 5 people or less.." << endl;
+		cout << "Current team: ";
+		for (int count = 0; count < input.size(); count++)
+		{
+			cout << input[count].getName() << " ";
+		}
+
+		cout << endl;
+	}
+
+	// now we sort through the vector and return just the top 5 salesmen if the roster is a bit longer
+	else
+	{
+		for (int count = 0; count < input.size()-1; ++count) // we only need to iterate 5 times since we just want the top 5 salesmen
+		{
+			// will be using bubble sort
+			for (int i = 0; i < input.size() - 1 - count; ++i)
+			{
+				if (input[i].getSales() > input[i + 1].getSales())
+				{
+					swap(input[i], input[i + 1]);
+				}
+			}
+			
+		}
+
+		// after the vector is sorted we can just copy over the top 5 values
+		int d = 5;
+
+		for (int count = 5; count > 0; count--)
+		{
+			if (d > 0)
+			{
+				// temp salemen
+				//Salesman temp(input[count]);
+
+				topFive.push_back(input[count]);
+			}
+			d--;
+		}
+	}
+
+	// after we get the 5 top salesmen, return the vector back to int main
+	return topFive;
+}
+
+// used  to create a psuedo random name and returns name as a string
+string makeName()
+{
+	// array to hold top 50 names in US, male and female
+	vector <string> nameBank = { "James", "Michael", "Robert", "John", "David", "William", "Richard", "Richard", "Joseph", "Thomas", "Thomas", "Thomas", "Chris",
+	"Charles", "Daniel", "Matthew", "Anthony", "Anthony", "Mark", "Donald", "Steven", "Andrew", "Kenneth", "Paul", "Joshua", "Kevin", "Brian", "Timothy", "Ronald", 
+	"Mary", "Patricia", "Jennifer", "Linda", "Elizabeth", "Barbara", "Susan", "Jessica", "Karen", "Sarah", "lisa", "Nancy", "Sandra", "Betty", "Ashley",
+	"Emily", "Kimberly", "Margaret", "Donna", "Michelle", "Carol", "Amanda", "Melissa", "Deborah", "Stephanie"};
+
+
+	// find a random number between 1-50 now
+	int ind = rand()% 50;
+
+	string temp = nameBank[ind];
+
+	return temp;
+}
+
+int generateSales()
+{
+
+	int temp = 350 + (rand() % 9651);
+
+	return temp;
+}
+
+vector<Salesman> generateSalesman()
+{
+
+	int rosterSize = (rand() % (20 - 3 + 1) + 3);
+
+	// vector to be returned
+	vector<Salesman> temp;
+
+	// now we generate the roster list
+	for (int count = 0; count < rosterSize; count++)
+	{
+		Salesman worker(makeName(), generateSales());
+		temp.push_back(worker);
+	}
+
+	// return the now filled vector
+	return temp;
+}
