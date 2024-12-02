@@ -1,0 +1,130 @@
+#include <iostream>
+#include <list>
+#include <cstdlib>
+#include <ctime>
+
+using namespace std;
+
+class HashTable 
+{
+private:
+    static const int TABLE_SIZE = 10;
+    list<pair<int, int>> table[TABLE_SIZE];  // Hash table as an array of lists
+
+    // Hash function
+    int hashFunction(int key) 
+    {
+        return key % TABLE_SIZE;
+    }
+
+public:
+    // Insert a key-value pair 
+    void insert(int key, int value) 
+    {
+        int index = hashFunction(key);
+        table[index].push_back({ key, value });
+    }
+
+    // Remove a key-value pair by key
+    void remove(int key) 
+    {
+        int index = hashFunction(key);
+        auto& chain = table[index];
+
+        for (auto it = chain.begin(); it != chain.end(); ++it) 
+        {
+            if (it->first == key) 
+            {
+                chain.erase(it);
+                return;
+            }
+        }
+    }
+
+    // Search for a value by key
+    int search(int key) {
+        int index = hashFunction(key);
+        auto& chain = table[index];
+
+        for (auto& pair : chain) 
+        {
+            if (pair.first == key) 
+            {
+                return pair.second;  // Return the value associated with the key
+            }
+        }
+        return -1;  // Return -1 if the key is not found
+    }
+
+    // Display the hash table
+    void display() 
+    {
+        for (int i = 0; i < TABLE_SIZE; ++i) 
+        {
+            cout << "Index " << i << ": ";
+            for (auto& pair : table[i]) 
+            {
+                cout << "[" << pair.first << ": " << pair.second << "] ";
+            }
+            cout << endl;
+        }
+    }
+};
+
+int main() {
+    HashTable hashTable;
+
+    // Seed
+    srand(time(0));
+
+    // Insert 20 random key-value pairs
+    for (int i = 0; i < 20; ++i) 
+    {
+        int key = rand() % 101;  // Random key between 0 and 100
+        int value = rand() % 101;  // Random value between 0 and 100
+        hashTable.insert(key, value);
+    }
+
+    cout << "Hash Table after inserting 20 random keys and values:\n";
+    hashTable.display(); // show key vals we are workinb with
+
+    // Remove two keys
+    int keyToRemove1 = 23; 
+    int keyToRemove2 = 45;  
+
+    // show user what we are geting rid of for this example
+    cout << "\nRemoving key " << keyToRemove1 << "...\n";
+    hashTable.remove(keyToRemove1);
+    hashTable.display();
+
+    cout << "\nRemoving key " << keyToRemove2 << "...\n";
+    hashTable.remove(keyToRemove2);
+    hashTable.display();
+
+    // Search for two keys
+    int keyToSearch1 = 12;
+    int keyToSearch2 = 22;
+
+    cout << "\nSearching for key " << keyToSearch1 << ": ";
+    int searchResult1 = hashTable.search(keyToSearch1);
+    if (searchResult1 != -1)
+    {
+        cout << "Found value: " << searchResult1 << endl;
+    }
+    else
+    {
+        cout << "Key not found.\n";
+    }
+    cout << "\nSearching for key " << keyToSearch2 << ": ";
+    int searchResult2 = hashTable.search(keyToSearch2);
+    if (searchResult2 != -1)
+    {
+        cout << "Found value: " << searchResult2 << endl;
+    }
+    else
+    {
+        cout << "Key not found.\n";
+    }
+
+    return 0;
+}
