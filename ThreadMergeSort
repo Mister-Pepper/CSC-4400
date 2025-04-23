@@ -1,0 +1,154 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <sys/time.h>
+
+#define SIZE_20 20
+#define SIZE_1000 1000 // the 100,000 was breaking my pc, so i brought it down to 1000
+#define MAX_THREADS 4
+
+// Function to merge two halves
+void merge(int arr[], int l, int m, int r) {
+    int i = l, j = m + 1, k = 0;
+    int n = r - l + 1;
+    int *temp = (int *)malloc(n * sizeof(int));
+
+    while (i <= m && j <= r) {
+        if (arr[i] < arr[j])
+            temp[k++] = arr[i++];
+        else
+            temp[k++] = arr[j++];
+    }
+    while (i <= m)
+        temp[k++] = arr[i++];
+    while (j <= r)
+        temp[k++] = arr[j++];
+    for (i = l, k = 0; i <= r; i++, k++)
+        arr[i] = temp[k];
+
+    free(temp);
+}
+
+// Single-threaded merge sort
+void merge_sort(int arr[], int l, int r) {
+    if (l < r) {
+        int m = (l + r) / 2;
+        merge_sort(arr, l, m);
+        merge_sort(arr, m + 1, r);
+        merge(arr, l, m, r);
+    }
+}
+
+// Multi-threaded merge sort
+typedef struct {        // gotta remember to use typedef otherwise its a pain in my butt to define in code
+    int *arr;
+    int l;
+    int r;
+} ThreadArg;
+
+
+// big boss call
+void *parallel_merge_sort(void *arg) 
+{
+    ThreadArg *data = (ThreadArg *)arg;
+    int l = data->l;
+    int r = data->r;
+    int *arr = data->arr;
+
+    if (l < r) 
+    {
+        int m = (l + r) / 2;
+
+        pthread_t t1, t2;
+        ThreadArg left = {arr, l, m};
+        ThreadArg right = {arr, m + 1, r};
+        
+        // will create threads here and pass function into it
+        pthread_create(&t1, NULL, parallel_merge_sort, &left);
+        pthread_create(&t2, NULL, parallel_merge_sort, &right);
+        
+        // wait for threads to join before i keep going
+        pthread_join(t1, NULL);
+        pthread_join(t2, NULL);
+        
+        // MERGE!
+        merge(arr, l, m, r);
+    }
+    return NULL;
+}
+
+//print arrays
+void print_array(int *arr, int size) 
+{
+
+    for (int i = 0; i < size; i++)
+        printf("%d ", arr[i]);
+
+    printf("\n");
+}
+
+// utility to copy an array
+void copy_array(int *src, int *dest, int size) 
+{
+    for (int i = 0; i < size; i++)
+        dest[i] = src[i];
+}
+
+// Measure execution time
+double measure_time(void (*sort_fn)(int *, int, int), int *arr, int size) 
+{
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+    sort_fn(arr, 0, size - 1);
+    gettimeofday(&end, NULL);
+    return (end.tv_sec - start.tv_sec) * 1e6 + (end.tv_usec - start.tv_usec);
+}
+
+int main() {
+    // Test correctness on array size 20
+    int arr_test[SIZE_20] = {12, 4, 7, 2, 9, 15, 1, 6, 11, 3, 8, 20, 18, 13, 10, 19, 14, 5, 17, 16}; // hope the hard coded values are okay
+    int arr_copy[SIZE_20]; // easy 
+
+    // singl ethread test
+    copy_array(arr_test, arr_copy, SIZE_20);
+    merge_sort(arr_copy, 0, SIZE_20 - 1);
+    printf("Single-thread sorted (20 elements):\n");
+    print_array(arr_copy, SIZE_20);
+
+    // testing for multithread
+    copy_array(arr_test, arr_copy, SIZE_20);
+    ThreadArg arg = {arr_copy, 0, SIZE_20 - 1};
+    parallel_merge_sort(&arg);
+    printf("Multi-thread sorted (20 elements):\n");
+    print_array(arr_copy, SIZE_20);
+
+    // Performance comparison for 100,000 elements
+    int *arr_large = malloc(SIZE_1000 * sizeof(int));
+    int *arr_large_copy = malloc(SIZE_1000 * sizeof(int));
+
+    // for the bigger array I just used rand function to fill up array
+    for (int i = 0; i < SIZE_1000; i++)
+        arr_large[i] = rand() % 100000;
+
+    // single-thread time
+    copy_array(arr_large, arr_large_copy, SIZE_1000);
+    double time_single = measure_time(merge_sort, arr_large_copy, SIZE_1000);
+    printf("Single-thread time for 1000 elements: %.2f microseconds\n", time_single);
+
+    // multi-thread time
+    copy_array(arr_large, arr_large_copy, SIZE_1000);
+    ThreadArg big_arg = {arr_large_copy, 0, SIZE_1000 - 1};
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+    parallel_merge_sort(&big_arg);
+    gettimeofday(&end, NULL);
+
+
+    double time_multi = (end.tv_sec - start.tv_sec) * 1e6 + (end.tv_usec - start.tv_usec);
+    printf("Multi-thread time for 1000 elements: %.2f microseconds\n", time_multi);
+
+    // bets practice
+    free(arr_large);
+    free(arr_large_copy);
+    return 0;
+}
